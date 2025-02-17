@@ -5,7 +5,7 @@ plugins {
     id("maven-publish")
 }
 
-group = "org.scr.project"
+group = "com.scr.project.commons.cinema"
 version = "1.0-SNAPSHOT"
 
 repositories {

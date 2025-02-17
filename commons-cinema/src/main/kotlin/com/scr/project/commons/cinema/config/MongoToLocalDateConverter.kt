@@ -1,4 +1,4 @@
-package org.scr.project.com.scr.project.commons.cinema.config
+package com.scr.project.commons.cinema.config
 
 import org.springframework.core.convert.converter.Converter
 import org.springframework.data.convert.ReadingConverter

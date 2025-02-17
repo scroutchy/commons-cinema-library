@@ -2,7 +2,6 @@ package com.scr.project.commons.cinema.config
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.scr.project.com.scr.project.commons.cinema.config.LocalDateToMongoConverter
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.Date

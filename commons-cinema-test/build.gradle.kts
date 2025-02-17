@@ -4,7 +4,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
 }
 
-group = "org.scr.project"
+group = "com.scr.project.commons.cinema.test"
 version = "1.0-SNAPSHOT"
 
 repositories {
