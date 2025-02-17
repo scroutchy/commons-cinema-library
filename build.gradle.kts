@@ -35,6 +35,16 @@ tasks.bootJar {
 }
 
 publishing {
+
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            groupId = group.toString()
+            artifactId = "commons-cinema-library"
+            version = version
+        }
+    }
+
     repositories {
         maven {
             url = uri("${System.getenv("CI_API_V4_URL")}/projects/${System.getenv("CI_PROJECT_ID")}/packages/maven")
