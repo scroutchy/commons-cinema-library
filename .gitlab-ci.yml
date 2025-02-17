@@ -40,5 +40,9 @@ test:
 
 publish:
   stage: publish
+  before_script:
+    - echo $CI_API_V4_URL
+    - echo $CI_PROJECT_ID  #TODO: remove
+    - echo $CI_JOB_TOKEN   #TODO: remove
   script:
     - gradle publish
