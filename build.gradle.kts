@@ -52,9 +52,7 @@ publishing {
                 name = "Job-Token"
                 value = System.getenv("CI_JOB_TOKEN")
             }
-//            authentication {
-//                header(HttpHeaderAuthentication::class.java)
-//            }
+            authentication { create("header", HttpHeaderAuthentication::class.java) }
         }
     }
 }
