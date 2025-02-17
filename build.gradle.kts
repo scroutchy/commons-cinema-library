@@ -17,10 +17,8 @@ repositories {
 }
 
 dependencies {
-//    testImplementation(kotlin("test"))
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.litote.kmongo:kmongo:$kMongoVersion")
 }
 
 tasks.test {

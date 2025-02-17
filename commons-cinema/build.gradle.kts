@@ -13,9 +13,12 @@ repositories {
 }
 
 dependencies {
-//    testImplementation(kotlin("test"))
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
+    implementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
+    testImplementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+    testImplementation("io.projectreactor:reactor-test")
 }
 
 tasks.test {

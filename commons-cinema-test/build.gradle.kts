@@ -14,7 +14,6 @@ repositories {
 private val kMongoVersion = "4.10.0"
 
 dependencies {
-//    testImplementation(kotlin("test"))
     implementation("org.springframework.boot:spring-boot-starter-test")
     implementation("org.litote.kmongo:kmongo:$kMongoVersion")
 }
