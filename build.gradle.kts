@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "1.9.25"
     id("org.springframework.boot") version "3.4.2"
     id("io.spring.dependency-management") version "1.1.7"
+    id("maven-publish")
 }
 
 group = "org.scr.project"
@@ -31,4 +32,19 @@ kotlin {
 
 tasks.bootJar {
     enabled = false
+}
+
+publishing {
+    repositories {
+        maven {
+            url = uri("${System.getenv("CI_API_V4_URL")}/projects/${System.getenv("CI_PROJECT_ID")}/packages/maven")
+            credentials(HttpHeaderCredentials::class.java) {
+                name = "Job-Token"
+                value = System.getenv("CI_JOB_TOKEN")
+            }
+//            authentication {
+//                header(HttpHeaderAuthentication::class.java)
+//            }
+        }
+    }
 }

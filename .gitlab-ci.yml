@@ -3,7 +3,7 @@ image: gradle:jdk17-alpine
 stages:
   - build
   - test
-  - deploy
+  - publish
 
 variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
@@ -38,7 +38,7 @@ test:
       - build/reports/jacoco/test/jacocoTestReport.xml
   coverage: '/Total.*?([0-9,.]{1,5})%/'
 
-deploy:
-  stage: deploy
+publish:
+  stage: publish
   script:
     - gradle publish
