@@ -7,10 +7,6 @@ plugins {
 group = "org.scr.project"
 version = "1.0-SNAPSHOT"
 
-
-private val kMongoVersion = "4.10.0"
-
-
 repositories {
     mavenCentral()
 }
@@ -19,7 +15,6 @@ dependencies {
 //    testImplementation(kotlin("test"))
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.litote.kmongo:kmongo:$kMongoVersion")
 }
 
 tasks.test {
