@@ -16,11 +16,11 @@ internal class RangedResponseTest {
 
     @Test
     fun `to ranged response should return accept range header with collection name inferred from ApiDTO`() {
-        Flux.empty<ActorApiDto>().toRangedResponse(ActorApiDto::class.java)
+        Flux.empty<GenericClassApiDto>().toRangedResponse(GenericClassApiDto::class.java)
             .test()
             .expectSubscription()
             .consumeNextWith {
-                assertThat(it.headers[ACCEPT_RANGES]!!.first()).isEqualTo("actors")
+                assertThat(it.headers[ACCEPT_RANGES]!!.first()).isEqualTo("genericclasss")
                 assertThat(it.statusCode).isEqualTo(OK)
             }
             .verifyComplete()
@@ -28,12 +28,12 @@ internal class RangedResponseTest {
 
     @Test
     fun `to ranged response should return content range header with range value and ok status when returning all requested elements`() {
-        actorsApiDto(5).toFlux().toRangedResponse(ActorApiDto::class.java, Pageable.ofSize(10))
+        genericDtos(5).toFlux().toRangedResponse(GenericClassApiDto::class.java, Pageable.ofSize(10))
             .test()
             .expectSubscription()
             .consumeNextWith {
                 assertThat(it.body).hasSize(5)
-                assertThat(it.headers[CONTENT_RANGE]!!.first()).isEqualTo("actors 0-4/5")
+                assertThat(it.headers[CONTENT_RANGE]!!.first()).isEqualTo("genericclasss 0-4/5")
                 assertThat(it.statusCode).isEqualTo(OK)
             }
             .verifyComplete()
@@ -41,11 +41,11 @@ internal class RangedResponseTest {
 
     @Test
     fun `to ranged response should return content range header with range value and partial content status when returning all requested elements`() {
-        actorsApiDto(5).toFlux().toRangedResponse(ActorApiDto::class.java, Pageable.ofSize(5)).test()
+        genericDtos(5).toFlux().toRangedResponse(GenericClassApiDto::class.java, Pageable.ofSize(5)).test()
             .expectSubscription()
             .consumeNextWith {
                 assertThat(it.body).hasSize(5)
-                assertThat(it.headers[CONTENT_RANGE]!!.first()).isEqualTo("actors 0-4/5")
+                assertThat(it.headers[CONTENT_RANGE]!!.first()).isEqualTo("genericclasss 0-4/5")
                 assertThat(it.statusCode).isEqualTo(PARTIAL_CONTENT)
             }
             .verifyComplete()
@@ -53,11 +53,11 @@ internal class RangedResponseTest {
 
     @Test
     fun `to ranged response with count should return content range header with count and PARTIAL_CONTENT status when returning less elements than the requested total count`() {
-        actorsApiDto().toFlux().toRangedResponse(ActorApiDto::class.java, Pageable.ofSize(10)).test()
+        genericDtos().toFlux().toRangedResponse(GenericClassApiDto::class.java, Pageable.ofSize(10)).test()
             .expectSubscription()
             .consumeNextWith {
                 assertThat(it.body).hasSize(10)
-                assertThat(it.headers[CONTENT_RANGE]!!.first()).isEqualTo("actors 0-9/10")
+                assertThat(it.headers[CONTENT_RANGE]!!.first()).isEqualTo("genericclasss 0-9/10")
                 assertThat(it.statusCode).isEqualTo(PARTIAL_CONTENT)
             }
             .verifyComplete()
@@ -65,11 +65,11 @@ internal class RangedResponseTest {
 
     @Test
     fun `to ranged response with count should return content range header with count and partial content status when returning all elements equal to page size`() {
-        actorsApiDto().toFlux().toRangedResponse(ActorApiDto::class.java, Pageable.ofSize(10)).test()
+        genericDtos().toFlux().toRangedResponse(GenericClassApiDto::class.java, Pageable.ofSize(10)).test()
             .expectSubscription()
             .consumeNextWith {
                 assertThat(it.body).hasSize(10)
-                assertThat(it.headers[CONTENT_RANGE]!!.first()).isEqualTo("actors 0-9/10")
+                assertThat(it.headers[CONTENT_RANGE]!!.first()).isEqualTo("genericclasss 0-9/10")
                 assertThat(it.statusCode).isEqualTo(PARTIAL_CONTENT)
             }
             .verifyComplete()
@@ -77,11 +77,11 @@ internal class RangedResponseTest {
 
     @Test
     fun `to ranged response with count should return content range header with count and partial content status when returning all elements equal to page size and total count is provided`() {
-        actorsApiDto().toFlux().toRangedResponse(ActorApiDto::class.java, Pageable.ofSize(10), 30).test()
+        genericDtos().toFlux().toRangedResponse(GenericClassApiDto::class.java, Pageable.ofSize(10), 30).test()
             .expectSubscription()
             .consumeNextWith {
                 assertThat(it.body).hasSize(10)
-                assertThat(it.headers[CONTENT_RANGE]!!.first()).isEqualTo("actors 0-9/10")
+                assertThat(it.headers[CONTENT_RANGE]!!.first()).isEqualTo("genericclasss 0-9/10")
                 assertThat(it.statusCode).isEqualTo(PARTIAL_CONTENT)
             }
             .verifyComplete()
@@ -89,20 +89,20 @@ internal class RangedResponseTest {
 
     @Test
     fun `to ranged response with count should return content range header with count and OK status when returning all elements and total count is provided and smaller than page size`() {
-        actorsApiDto().toFlux().toRangedResponse(ActorApiDto::class.java, Pageable.ofSize(10), 5).test()
+        genericDtos().toFlux().toRangedResponse(GenericClassApiDto::class.java, Pageable.ofSize(10), 5).test()
             .expectSubscription()
             .consumeNextWith {
                 assertThat(it.body).hasSize(10)
-                assertThat(it.headers[CONTENT_RANGE]!!.first()).isEqualTo("actors 0-9/10")
+                assertThat(it.headers[CONTENT_RANGE]!!.first()).isEqualTo("genericclasss 0-9/10")
                 assertThat(it.statusCode).isEqualTo(OK)
             }
             .verifyComplete()
     }
 
-    private fun actorsApiDto(number: Int = 10) = List(number) { ActorApiDto() }
+    private fun genericDtos(number: Int = 10) = List(number) { GenericClassApiDto() }
 }
 
-data class ActorApiDto(
+data class GenericClassApiDto(
     val id: String = "id",
     val name: String = "name",
     val birthDate: LocalDate = LocalDate.now(),
