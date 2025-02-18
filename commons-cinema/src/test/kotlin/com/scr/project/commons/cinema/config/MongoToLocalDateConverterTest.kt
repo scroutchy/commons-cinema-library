@@ -14,6 +14,5 @@ class MongoToLocalDateConverterTest {
     fun `convert should convert Date to LocalDate`() {
         val date = Date.from(Instant.now())
         assertThat(converter.convert(date)).isEqualTo(LocalDate.now())
-
     }
 }

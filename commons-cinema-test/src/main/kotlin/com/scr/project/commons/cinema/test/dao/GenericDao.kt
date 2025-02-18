@@ -7,7 +7,6 @@ import org.litote.kmongo.deleteMany
 import org.litote.kmongo.findOneById
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-
 import java.util.function.Predicate
 
 @Component
@@ -50,7 +49,7 @@ abstract class GenericDao<T : Any>(
 
     fun deleteAll() = collection.deleteMany()
 
-    fun defaultEntities() = emptyList<T>()
+    open fun defaultEntities() = emptyList<T>()
 
     fun initTestData() {
         deleteAll()

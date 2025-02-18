@@ -15,8 +15,13 @@ repositories {
 private val kMongoVersion = "4.10.0"
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-test")
+    implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.litote.kmongo:kmongo:$kMongoVersion")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-mongodb")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.testcontainers:testcontainers")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:mongodb")
 }
 
 tasks.test {
