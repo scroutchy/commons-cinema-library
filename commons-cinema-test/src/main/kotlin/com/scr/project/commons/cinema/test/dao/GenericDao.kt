@@ -5,20 +5,22 @@ import org.bson.types.ObjectId
 import org.litote.kmongo.KMongo
 import org.litote.kmongo.deleteMany
 import org.litote.kmongo.findOneById
-import org.springframework.beans.factory.annotation.Value
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.function.Predicate
 
 @Component
-abstract class GenericDao<T : Any>(
-    @Value("\${spring.data.mongodb.uri}") private val mongoUri: String,
-    entityClass: Class<T>,
-    collectionName: String,
-) {
+abstract class GenericDao<T : Any>(mongoUri: String, entityClass: Class<T>, collectionName: String) {
 
+    private val logger = LoggerFactory.getLogger(GenericDao::class.java)
     private val client = KMongo.createClient(mongoUri)
     private val database = client.getDatabase("test")
     protected val collection: MongoCollection<T> = database.getCollection(collectionName, entityClass)
+
+    init {
+        logger.info("MongoClient initialized with URI: $mongoUri")
+        logger.info("MongoCollection initialized with name: $collectionName and entity class: ${entityClass.simpleName}")
+    }
 
     fun insert(entity: T) = collection.insertOne(entity)
 
