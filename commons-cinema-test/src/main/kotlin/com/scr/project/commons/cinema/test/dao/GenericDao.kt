@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
 import java.util.function.Predicate
 
 @Component
-abstract class GenericDao<T : Any>(private val mongoUri: String, private val entityClass: Class<T>, private val collectionName: String) {
+abstract class GenericDao<T : Any>(protected val mongoUri: String, private val entityClass: Class<T>, private val collectionName: String) {
 
     private val logger = LoggerFactory.getLogger(GenericDao::class.java)
     private lateinit var client: MongoClient
