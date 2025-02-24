@@ -9,14 +9,17 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.Configuration
 import org.springframework.stereotype.Repository
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 
-@ContextConfiguration
+@ContextConfiguration(classes = [GenericDaoIntegrationTest.TestConfig::class])
 @ExtendWith(SpringExtension::class)
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -24,25 +27,24 @@ class GenericDaoIntegrationTest {
 
     companion object {
 
-        val mongoContainer = MongoDBContainer("mongo:6.0").apply { start() }
+        val mongoContainer = MongoDBContainer("mongo:6.0").apply {
+            start()
+            println("✅ MongoDB Container started at: $replicaSetUrl")
+        }
     }
 
     data class TestEntity(@BsonId val id: ObjectId = ObjectId.get(), val name: String)
 
-    @Repository
-    class TestEntityDao(@Value("\${spring.data.mongodb.uri}") private val mongoUri: String) :
-        GenericDao<TestEntity>(mongoUri, TestEntity::class.java, "testEntities") {
-
-        override fun defaultEntities() = listOf(TestEntity(name = "default"))
-    }
-
-    private lateinit var dao: TestEntityDao
-
     @BeforeEach
     fun setUp() {
-        val mongoUri = mongoContainer.replicaSetUrl
-        dao = TestEntityDao(mongoUri)
         dao.initTestData()
+    }
+
+    @Test
+    fun `should verify MongoDB connection is available`() {
+        println("✅ Testing MongoDB connection...")
+        val entities = dao.findAll() // If this fails, MongoDB was not ready
+        assertThat(entities).isNotNull
     }
 
     @Test
@@ -85,4 +87,29 @@ class GenericDaoIntegrationTest {
         dao.deleteAll()
         assertEquals(0, dao.count())
     }
+
+    // Injected DAO
+    @Autowired
+    private lateinit var dao: TestEntityDao
+
+    @Configuration
+    @ComponentScan(basePackageClasses = [TestEntityDao::class])
+    open class TestConfig {
+
+        @Bean
+        open fun testEntityDao(): TestEntityDao {
+            val mongoUri = mongoContainer.replicaSetUrl
+            println("Creating TestEntityDao with Mongo URI: $mongoUri")
+            return TestEntityDao(mongoUri)
+        }
+    }
+}
+
+@Repository
+class TestEntityDao(mongoUri: String) :
+    GenericDao<GenericDaoIntegrationTest.TestEntity>(
+        mongoUri, GenericDaoIntegrationTest.TestEntity::class.java, "testEntities"
+    ) {
+
+    override fun defaultEntities() = listOf(GenericDaoIntegrationTest.TestEntity(name = "default"))
 }
