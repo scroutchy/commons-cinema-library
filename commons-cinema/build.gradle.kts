@@ -2,11 +2,12 @@ plugins {
     kotlin("jvm") version "1.9.25"
     id("org.springframework.boot") version "3.4.2"
     id("io.spring.dependency-management") version "1.1.7"
+    id("java-library")
     id("maven-publish")
 }
 
 group = "com.scr.project.commons.cinema"
-version = "1.0-SNAPSHOT"
+version = "1.0-RC1"
 
 repositories {
     mavenCentral()
@@ -26,6 +27,9 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(17)
+}
+java {
+    withSourcesJar()
 }
 
 tasks.bootJar {
