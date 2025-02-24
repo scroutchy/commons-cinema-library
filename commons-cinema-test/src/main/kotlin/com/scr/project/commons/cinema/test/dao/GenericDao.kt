@@ -3,7 +3,6 @@ package com.scr.project.commons.cinema.test.dao
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
-import jakarta.annotation.PostConstruct
 import org.bson.types.ObjectId
 import org.litote.kmongo.KMongo
 import org.litote.kmongo.deleteMany
@@ -13,19 +12,18 @@ import org.springframework.stereotype.Component
 import java.util.function.Predicate
 
 @Component
-abstract class GenericDao<T : Any>(protected val mongoUri: String, private val entityClass: Class<T>, private val collectionName: String) {
+abstract class GenericDao<T : Any>(
+    private val mongoUri: String,
+    private val entityClass: Class<T>,
+    private val collectionName: String
+) {
 
     private val logger = LoggerFactory.getLogger(GenericDao::class.java)
-    private lateinit var client: MongoClient
-    private lateinit var database: MongoDatabase
-    protected lateinit var collection: MongoCollection<T>
+    private val client: MongoClient = KMongo.createClient(mongoUri)
+    private val database: MongoDatabase = client.getDatabase("test")
+    protected val collection: MongoCollection<T> = database.getCollection(collectionName, entityClass)
 
-    @PostConstruct
-    fun init() {
-        client = KMongo.createClient(mongoUri)
-        database = client.getDatabase("test")
-        collection = database.getCollection(collectionName, entityClass)
-
+    init {
         logger.info("MongoClient initialized with URI: $mongoUri")
         logger.info("MongoCollection initialized with name: $collectionName and entity class: ${entityClass.simpleName}")
     }
