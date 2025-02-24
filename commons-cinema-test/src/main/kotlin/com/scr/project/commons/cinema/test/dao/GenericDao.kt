@@ -19,13 +19,16 @@ abstract class GenericDao<T : Any>(
 ) {
 
     private val logger = LoggerFactory.getLogger(GenericDao::class.java)
-    private val client: MongoClient = KMongo.createClient(mongoUri)
-    private val database: MongoDatabase = client.getDatabase("test")
-    protected val collection: MongoCollection<T> = database.getCollection(collectionName, entityClass)
-
-    init {
-        logger.info("MongoClient initialized with URI: $mongoUri")
-        logger.info("MongoCollection initialized with name: $collectionName and entity class: ${entityClass.simpleName}")
+    private val client: MongoClient by lazy {
+        KMongo.createClient(mongoUri).also {
+            logger.info("MongoClient initialized with URI: $mongoUri")
+        }
+    }
+    private val database: MongoDatabase by lazy { client.getDatabase("test") }
+    protected val collection: MongoCollection<T> by lazy {
+        database.getCollection(collectionName, entityClass).also {
+            logger.info("MongoCollection initialized with name: $collectionName and entity class: ${entityClass.simpleName}")
+        }
     }
 
     fun insert(entity: T) = collection.insertOne(entity)
