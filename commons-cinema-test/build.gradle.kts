@@ -7,7 +7,17 @@ plugins {
 }
 
 group = "com.scr.project.commons.cinema.test"
-version = "1.0-RC1"
+fun getGitTag(): String {
+    return try {
+        val process = ProcessBuilder("git", "describe", "--tags").start()
+        val result = process.inputStream.bufferedReader().readText().trim()
+        process.waitFor() // Wait for the process to finish
+        result
+    } catch (e: Exception) {
+        "0.0.1-SNAPSHOT" // Default version if no tag exists
+    }
+}
+version = getGitTag()
 
 repositories {
     mavenCentral()

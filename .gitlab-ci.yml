@@ -49,3 +49,5 @@ publish:
   #    - echo $CI_JOB_TOKEN   #TODO: remove
   script:
     - gradle publish
+  only:
+    - tags
