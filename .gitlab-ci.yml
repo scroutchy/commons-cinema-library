@@ -3,6 +3,7 @@ image: gradle:jdk17-alpine
 stages:
   - build
   - test
+  - sonar
   - publish
 
 variables:
@@ -40,6 +41,20 @@ test:
     paths:
       - build/reports/jacoco/test/jacocoTestReport.xml
   coverage: '/Total.*?([0-9,.]{1,5})%/'
+
+sonarcloud-check:
+  stage: sonar
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script: gradle sonar
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH != "master" && $CI_PIPELINE_SOURCE != "merge_request_event"'
+      when: manual
+    - when: never
 
 publish:
   stage: publish
