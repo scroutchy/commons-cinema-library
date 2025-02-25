@@ -1,0 +1,76 @@
+image: gradle:jdk17-alpine
+
+stages:
+  - build
+  - test
+  - sonar
+  - publish
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: unix:///var/run/docker.sock
+  TESTCONTAINERS_HOST_OVERRIDE: "host.docker.internal"
+#  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .gradle/wrapper
+    - .gradle/caches
+
+build:
+  stage: build
+  script:
+    - gradle --build-cache assemble
+  artifacts:
+    paths:
+      - build/libs/*.jar
+
+test:
+  stage: test
+  script:
+    - gradle check
+  dependencies:
+    - build
+  artifacts:
+    reports:
+      junit: commons-cinema/build/test-results/test/**/TEST-*.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: commons-cinema/build/reports/jacoco/test/jacocoTestReport.xml
+    paths:
+      - commons-cinema/build/reports/jacoco/test/jacocoTestReport.xml
+  coverage: '/Total.*?([0-9,.]{1,5})%/'
+
+gemnasium-maven-dependency_scanning:
+  before_script:
+    - chmod +x gradlew
+
+sonarcloud-check:
+  stage: sonar
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script: gradle sonar
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH != "master" && $CI_PIPELINE_SOURCE != "merge_request_event"'
+      when: manual
+    - when: never
+
+publish:
+  stage: publish
+  #  before_script:
+  #    - echo $CI_API_V4_URL
+  #    - echo $CI_PROJECT_ID  #TODO: remove
+  #    - echo $CI_JOB_TOKEN   #TODO: remove
+  script:
+    - gradle publish
+  only:
+    - tags
+
+include:
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+    path: /
