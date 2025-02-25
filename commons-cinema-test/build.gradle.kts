@@ -24,10 +24,17 @@ repositories {
 }
 
 private val kMongoVersion = "4.10.0"
+private val netMinidevVersion = "2.5.2"
+private val nettyHandlerVersion = "4.1.118.Final"
+private val commonsCompressVersion = "1.26.0"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.litote.kmongo:kmongo:$kMongoVersion")
+    implementation("net.minidev:json-smart:$netMinidevVersion")
+    implementation("io.netty:netty-handler:$nettyHandlerVersion")
+    implementation("io.netty:netty-common:$nettyHandlerVersion")
+    implementation("org.apache.commons:commons-compress:$commonsCompressVersion")
     testImplementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.testcontainers:testcontainers")
