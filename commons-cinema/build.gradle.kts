@@ -4,6 +4,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     id("java-library")
     id("maven-publish")
+    id("jacoco")
 }
 
 group = "com.scr.project.commons.cinema"
@@ -33,9 +34,6 @@ dependencies {
     testImplementation("io.projectreactor:reactor-test")
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
 kotlin {
     jvmToolchain(17)
 }
@@ -45,6 +43,48 @@ java {
 
 tasks.bootJar {
     enabled = false
+}
+
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+}
+
+tasks.register("printCoverage") {
+    group = "verification"
+    description = "Prints the code coverage of the project"
+    dependsOn(tasks.jacocoTestReport)
+    doLast {
+        val reportFile = layout.buildDirectory.file("reports/jacoco/test/jacocoTestReport.xml").get().asFile
+        if (reportFile.exists()) {
+            val factory = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+            val builder = factory.newDocumentBuilder()
+            val document = builder.parse(reportFile)
+            val counters = document.getElementsByTagName("counter")
+            var covered = 0
+            var missed = 0
+            for (i in 0 until counters.length) {
+                val counter = counters.item(i) as org.w3c.dom.Element
+                covered += counter.getAttribute("covered").toInt()
+                missed += counter.getAttribute("missed").toInt()
+            }
+            val totalCoverage = (covered * 100.0) / (covered + missed)
+            println("Total Code Coverage: %.2f%%".format(totalCoverage))
+        } else {
+            println("JaCoCo report file not found!")
+        }
+    }
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+    finalizedBy("jacocoTestReport", tasks.named("printCoverage"))
 }
 
 publishing {

@@ -21,9 +21,6 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
 kotlin {
     jvmToolchain(17)
 }
