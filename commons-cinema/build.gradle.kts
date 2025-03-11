@@ -30,13 +30,12 @@ repositories {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("net.minidev:json-smart:$netMinidevVersion")
     implementation("io.netty:netty-handler:$nettyHandlerVersion")
     implementation("io.netty:netty-common:$nettyHandlerVersion")
     implementation("org.apache.commons:commons-compress:$commonsCompressVersion")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     testImplementation("io.projectreactor:reactor-test")
 }
