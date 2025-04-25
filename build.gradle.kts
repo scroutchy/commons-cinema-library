@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.9.25"
+    kotlin("jvm") version "2.1.20"
     id("org.springframework.boot") version "3.4.5"
     id("io.spring.dependency-management") version "1.1.7"
     id("maven-publish")
@@ -8,9 +8,6 @@ plugins {
 
 group = "org.scr.project"
 version = "1.0-SNAPSHOT"
-
-
-private val kMongoVersion = "4.10.0"
 
 
 repositories {
