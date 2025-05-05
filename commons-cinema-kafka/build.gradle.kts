@@ -7,7 +7,7 @@ plugins {
     id("jacoco")
 }
 
-group = "com.scr.project.commons.cinema.kafka"
+group = "com.scr.project.commons.cinema"
 
 fun getGitTag(): String {
     return try {
@@ -26,12 +26,14 @@ private val reactorKafkaVersion = "1.3.23"
 
 repositories {
     mavenCentral()
+    maven("https://packages.confluent.io/maven/")
 }
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.apache.commons:commons-compress:$commonsCompressVersion")
     implementation("io.projectreactor.kafka:reactor-kafka:$reactorKafkaVersion")
+    implementation("io.confluent:kafka-avro-serializer:7.9.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     testImplementation("io.projectreactor:reactor-test")
