@@ -4,11 +4,12 @@ import io.confluent.kafka.serializers.KafkaAvroSerializer
 import org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG
 import org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG
 import org.apache.kafka.common.serialization.StringSerializer
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-open class KafkaAvroProducerConfiguration(private val kafkaAvroCommonsProperties: Map<String, Any>) {
+open class KafkaAvroProducerConfiguration(@Qualifier("kafkaAvroCommonsProperties") private val kafkaAvroCommonsProperties: Map<String, Any>) {
 
     @Bean
     open fun kafkaAvroProducerProperties(): Map<String, Any> {
