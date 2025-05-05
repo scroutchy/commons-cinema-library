@@ -1,6 +1,5 @@
 package com.scr.project.commons.cinema.kafka.config
 
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG
 import org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG
@@ -8,6 +7,7 @@ import org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG
+import org.apache.kafka.common.config.SaslConfigs.SASL_JAAS_CONFIG
 import org.apache.kafka.common.config.SaslConfigs.SASL_MECHANISM
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.assertj.core.api.Assertions.assertThat
@@ -45,29 +45,13 @@ class KafkaAvroConsumerConfigurationTest(
         val properties = configuration.kafkaAvroConsumerProperties()
 
         assertThat(properties[BOOTSTRAP_SERVERS_CONFIG]).isEqualTo(bootstrapServers)
-        assertThat(properties[SCHEMA_REGISTRY_URL_CONFIG]).isEqualTo(schemaRegistryUrl)
+        assertThat(properties["schema.registry.url"]).isEqualTo(schemaRegistryUrl)
         assertThat(properties[SECURITY_PROTOCOL_CONFIG]).isEqualTo(securityProtocol)
         assertThat(properties[SASL_MECHANISM]).isEqualTo(saslMechanism)
         assertThat(properties[GROUP_ID_CONFIG]).isEqualTo(groupId)
         assertThat(properties[KEY_DESERIALIZER_CLASS_CONFIG]).isEqualTo(StringDeserializer::class.java)
         assertThat(properties[VALUE_DESERIALIZER_CLASS_CONFIG]).isEqualTo(KafkaAvroDeserializer::class.java)
         assertThat(properties[SPECIFIC_AVRO_READER_CONFIG]).isEqualTo(true)
-        assertThat(properties["sasl.jaas.config"]).isEqualTo("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"username\" password=\"password\";")
-    }
-
-    @Test
-    fun `kafkaAvroConsumerProperties overloads groupId in case it was already in common properties`() {
-        val config = KafkaAvroConsumerConfiguration(
-            bootstrapServers,
-            schemaRegistryUrl,
-            securityProtocol,
-            saslMechanism,
-            groupId,
-            "username",
-            "password"
-        )
-        val properties = config.kafkaAvroConsumerProperties()
-
-        assertThat(properties[GROUP_ID_CONFIG]).isEqualTo(groupId)
+        assertThat(properties[SASL_JAAS_CONFIG]).isEqualTo("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"username\" password=\"password\";")
     }
 }
