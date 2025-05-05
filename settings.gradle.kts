@@ -4,3 +4,4 @@ plugins {
 rootProject.name = "commons-cinema-library"
 include("commons-cinema")
 include("commons-cinema-test")
+include("commons-cinema-kafka")
