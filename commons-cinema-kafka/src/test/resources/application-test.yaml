@@ -1,0 +1,11 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka:9092
+    properties.schema.registry.url: http://schema-registry:8081
+    security-protocol: SASL_PLAINTEXT
+    consumer:
+      group-id: groupId
+    sasl:
+      mechanism: PLAIN
+      username: username
+      password: password

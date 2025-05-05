@@ -1,6 +1,5 @@
-package com.scr.project.commons.cinema.kafka
+package com.scr.project.commons.cinema.kafka.consumer
 
-import com.scr.project.commons.cinema.kafka.consumer.KafkaConsumerInitializer
 import com.scr.project.commons.cinema.kafka.processor.KafkaProcessor
 import io.mockk.clearMocks
 import io.mockk.every

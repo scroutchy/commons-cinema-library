@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-class KafkaAvroCommonConfiguration(
+open class KafkaAvroCommonConfiguration(
     @Value("\${spring.kafka.bootstrap-servers}") private val bootstrapServers: String,
     @Value("\${spring.kafka.properties.schema.registry.url}") private val schemaRegistryUrl: String,
     @Value("\${spring.kafka.security-protocol}") private val securityProtocol: String,
@@ -20,7 +20,7 @@ class KafkaAvroCommonConfiguration(
 ) {
 
     @Bean
-    fun kafkaAvroCommonProperties(): Map<String, Any> {
+    open fun kafkaAvroCommonProperties(): Map<String, Any> {
         val commonProperties = mapOf(
             BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
             SCHEMA_REGISTRY_URL_CONFIG to schemaRegistryUrl,
@@ -28,10 +28,10 @@ class KafkaAvroCommonConfiguration(
             SASL_MECHANISM to saslMechanism,
         )
 
-        if (saslUsername != null && saslPassword != null) {
+        return if (saslUsername != null && saslPassword != null) {
             commonProperties + mapOf(SASL_JAAS_CONFIG to "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"$saslUsername\" password=\"$saslPassword\";")
+        } else {
+            commonProperties
         }
-
-        return commonProperties
     }
 }

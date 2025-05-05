@@ -11,13 +11,13 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-class KafkaAvroConsumerConfiguration(
+open class KafkaAvroConsumerConfiguration(
     private val kafkaAvroCommonsProperties: Map<String, Any>,
     @Value("\${spring.kafka.consumer.group-id}") private val groupId: String
 ) {
 
     @Bean
-    fun kafkaAvroConsumerProperties(): Map<String, Any> {
+    open fun kafkaAvroConsumerProperties(): Map<String, Any> {
         return kafkaAvroCommonsProperties + mapOf(
             GROUP_ID_CONFIG to groupId,
             KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
