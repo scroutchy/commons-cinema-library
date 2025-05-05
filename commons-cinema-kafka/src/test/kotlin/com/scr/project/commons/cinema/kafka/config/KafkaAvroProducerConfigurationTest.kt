@@ -6,6 +6,7 @@ import org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG
 import org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG
 import org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG
 import org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG
+import org.apache.kafka.common.config.SaslConfigs.SASL_JAAS_CONFIG
 import org.apache.kafka.common.config.SaslConfigs.SASL_MECHANISM
 import org.apache.kafka.common.serialization.StringSerializer
 import org.assertj.core.api.Assertions.assertThat
@@ -30,8 +31,7 @@ class KafkaAvroProducerConfigurationTest(
         schemaRegistryUrl,
         securityProtocol,
         saslMechanism,
-        "username",
-        "password",
+        null, null,
     )
 
     @Test
@@ -44,5 +44,6 @@ class KafkaAvroProducerConfigurationTest(
         assertThat(properties[SASL_MECHANISM]).isEqualTo(saslMechanism)
         assertThat(properties[KEY_SERIALIZER_CLASS_CONFIG]).isEqualTo(StringSerializer::class.java)
         assertThat(properties[VALUE_SERIALIZER_CLASS_CONFIG]).isEqualTo(KafkaAvroSerializer::class.java)
+        assertThat(properties).doesNotContainKey(SASL_JAAS_CONFIG)
     }
 }

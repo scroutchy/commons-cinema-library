@@ -15,8 +15,8 @@ class KafkaAvroCommonConfiguration {
             schemaRegistryUrl: String,
             securityProtocol: String,
             saslMechanism: String,
-            saslUsername: String?,
-            saslPassword: String?
+            saslUsername: String? = null,
+            saslPassword: String? = null,
         ): Map<String, Any> {
             val commonProperties = mapOf(
                 BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
