@@ -6,20 +6,31 @@ import org.apache.kafka.clients.CommonClientConfigs.GROUP_ID_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG
 import org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG
 import org.apache.kafka.common.serialization.StringDeserializer
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
 open class KafkaAvroConsumerConfiguration(
-    @Qualifier("kafkaAvroCommonsProperties") private val kafkaAvroCommonsProperties: Map<String, Any>,
-    @Value("\${spring.kafka.consumer.group-id}") private val groupId: String
+    @Value("\${spring.kafka.bootstrap-servers}") private val bootstrapServers: String,
+    @Value("\${spring.kafka.properties.schema.registry.url}") private val schemaRegistryUrl: String,
+    @Value("\${spring.kafka.security-protocol}") private val securityProtocol: String,
+    @Value("\${spring.kafka.sasl.mechanism}") private val saslMechanism: String,
+    @Value("\${spring.kafka.consumer.group-id}") private val groupId: String,
+    @Value("\${spring.kafka.sasl.username}") private val saslUsername: String?,
+    @Value("\${spring.kafka.sasl.password}") private val saslPassword: String?,
 ) {
 
     @Bean
     open fun kafkaAvroConsumerProperties(): Map<String, Any> {
-        return kafkaAvroCommonsProperties + mapOf(
+        return KafkaAvroCommonConfiguration.kafkaAvroCommonProperties(
+            bootstrapServers,
+            schemaRegistryUrl,
+            securityProtocol,
+            saslMechanism,
+            saslUsername,
+            saslPassword
+        ) + mapOf(
             GROUP_ID_CONFIG to groupId,
             KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
             VALUE_DESERIALIZER_CLASS_CONFIG to KafkaAvroDeserializer::class.java,

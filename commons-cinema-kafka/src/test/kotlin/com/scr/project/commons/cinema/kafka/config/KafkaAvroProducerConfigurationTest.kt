@@ -25,10 +25,14 @@ class KafkaAvroProducerConfigurationTest(
     @Value("\${spring.kafka.sasl.mechanism}") private val saslMechanism: String,
 ) {
 
-    private val commonProperties = KafkaAvroCommonConfiguration(
-        bootstrapServers, schemaRegistryUrl, securityProtocol, saslMechanism, "username", "password"
-    ).kafkaAvroCommonProperties()
-    private val configuration = KafkaAvroProducerConfiguration(commonProperties)
+    private val configuration = KafkaAvroProducerConfiguration(
+        bootstrapServers,
+        schemaRegistryUrl,
+        securityProtocol,
+        saslMechanism,
+        "username",
+        "password",
+    )
 
     @Test
     fun `kafkaAvroProducerProperties contains mandatory properties`() {

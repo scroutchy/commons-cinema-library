@@ -26,15 +26,22 @@ class KafkaAvroConsumerConfigurationTest(
     @Value("\${spring.kafka.security-protocol}") private val securityProtocol: String,
     @Value("\${spring.kafka.sasl.mechanism}") private val saslMechanism: String,
     @Value("\${spring.kafka.consumer.group-id}") private val groupId: String,
-    ) {
+    @Value("\${spring.kafka.sasl.username}") private val username: String,
+    @Value("\${spring.kafka.sasl.password}") private val password: String
+) {
 
-    private val commonProperties = KafkaAvroCommonConfiguration(
-        bootstrapServers, schemaRegistryUrl, securityProtocol, saslMechanism, "username", "password"
-    ).kafkaAvroCommonProperties()
-    private val configuration = KafkaAvroConsumerConfiguration(commonProperties, groupId)
+    private val configuration = KafkaAvroConsumerConfiguration(
+        bootstrapServers,
+        schemaRegistryUrl,
+        securityProtocol,
+        saslMechanism,
+        groupId,
+        username,
+        password,
+    )
 
     @Test
-    fun `kafkaAvroConsumerProperties contains mandatory properties`() {
+    fun `kafkaAvroConsumerProperties contains properties`() {
         val properties = configuration.kafkaAvroConsumerProperties()
 
         assertThat(properties[BOOTSTRAP_SERVERS_CONFIG]).isEqualTo(bootstrapServers)
@@ -45,12 +52,20 @@ class KafkaAvroConsumerConfigurationTest(
         assertThat(properties[KEY_DESERIALIZER_CLASS_CONFIG]).isEqualTo(StringDeserializer::class.java)
         assertThat(properties[VALUE_DESERIALIZER_CLASS_CONFIG]).isEqualTo(KafkaAvroDeserializer::class.java)
         assertThat(properties[SPECIFIC_AVRO_READER_CONFIG]).isEqualTo(true)
+        assertThat(properties["sasl.jaas.config"]).isEqualTo("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"username\" password=\"password\";")
     }
 
     @Test
     fun `kafkaAvroConsumerProperties overloads groupId in case it was already in common properties`() {
-        val commonWithGroup = commonProperties + (GROUP_ID_CONFIG to "other-group")
-        val config = KafkaAvroConsumerConfiguration(commonWithGroup, groupId)
+        val config = KafkaAvroConsumerConfiguration(
+            bootstrapServers,
+            schemaRegistryUrl,
+            securityProtocol,
+            saslMechanism,
+            groupId,
+            "username",
+            "password"
+        )
         val properties = config.kafkaAvroConsumerProperties()
 
         assertThat(properties[GROUP_ID_CONFIG]).isEqualTo(groupId)
