@@ -35,6 +35,7 @@ dependencies {
     implementation("io.netty:netty-handler:$nettyHandlerVersion")
     implementation("io.netty:netty-common:$nettyHandlerVersion")
     implementation("org.apache.commons:commons-compress:$commonsCompressVersion")
+    implementation("org.awaitility:awaitility")
     testImplementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.testcontainers:testcontainers")
