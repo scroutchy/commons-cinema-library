@@ -7,10 +7,12 @@ import org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_C
 import org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
+@ConditionalOnProperty(prefix = "spring.kafka.consumer", name = ["group-id"], matchIfMissing = false)
 open class KafkaAvroConsumerConfiguration(
     @Value("\${spring.kafka.bootstrap-servers}") private val bootstrapServers: String,
     @Value("\${spring.kafka.properties.schema.registry.url}") private val schemaRegistryUrl: String,
