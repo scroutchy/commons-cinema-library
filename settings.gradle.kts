@@ -5,3 +5,4 @@ rootProject.name = "commons-cinema-library"
 include("commons-cinema")
 include("commons-cinema-test")
 include("commons-cinema-kafka")
+include("commons-cinema-outbox")
