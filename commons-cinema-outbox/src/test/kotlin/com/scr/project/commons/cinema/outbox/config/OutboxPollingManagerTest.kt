@@ -6,6 +6,8 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import reactor.core.publisher.Flux
+import reactor.test.scheduler.VirtualTimeScheduler
+import java.time.Duration
 
 class OutboxPollingManagerTest {
 
@@ -15,8 +17,9 @@ class OutboxPollingManagerTest {
     @Test
     fun `startPolling must call processOutbox`() {
         every { outboxRelayerService.processOutbox() } returns Flux.empty()
+        VirtualTimeScheduler.getOrSet()
         pollingManager.startPolling()
-        Thread.sleep(1100) // attendre un peu plus d'une période
+        VirtualTimeScheduler.getOrSet().advanceTimeBy(Duration.ofSeconds(1))
         verify(atLeast = 1) { outboxRelayerService.processOutbox() }
         pollingManager.stopPolling()
     }
@@ -24,8 +27,9 @@ class OutboxPollingManagerTest {
     @Test
     fun `startPolling must call processOutbox periodically`() {
         every { outboxRelayerService.processOutbox() } returns Flux.empty()
+        VirtualTimeScheduler.getOrSet()
         pollingManager.startPolling()
-        Thread.sleep(3300) // attendre un peu plus d'une période
+        VirtualTimeScheduler.getOrSet().advanceTimeBy(Duration.ofSeconds(3))
         verify(atLeast = 2) { outboxRelayerService.processOutbox() }
         pollingManager.stopPolling()
     }
