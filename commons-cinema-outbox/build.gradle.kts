@@ -63,3 +63,25 @@ tasks.jacocoTestReport {
         csv.required.set(false)
     }
 }
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            groupId = group.toString()
+            artifactId = "commons-cinema-outbox"
+            version = version
+        }
+    }
+
+    repositories {
+        maven {
+            url = uri("${System.getenv("CI_API_V4_URL")}/projects/${System.getenv("CI_PROJECT_ID")}/packages/maven")
+            credentials(HttpHeaderCredentials::class.java) {
+                name = "Job-Token"
+                value = System.getenv("CI_JOB_TOKEN")
+            }
+            authentication { create("header", HttpHeaderAuthentication::class.java) }
+        }
+    }
+}
