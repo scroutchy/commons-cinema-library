@@ -49,7 +49,7 @@ class OutboxRelayerService(
     private fun processSingleOutboxEvent(outbox: Outbox): Mono<Outbox> {
         return outbox.toMono().delayUntil {
             createSenderRecord(it)
-                .flatMap { kafkaSender.send(it.toMono()).singleOrEmpty() }
+                .flatMap { kafkaSender.send(it.toMono()).single() }
                 .doOnSuccess {
                     logger.info(
                         "Outbox event {} successfully sent to Kafka (Offset: {}, Partition: {}).",
@@ -73,7 +73,7 @@ class OutboxRelayerService(
             .doOnSuccess { logger.debug("Outbox event {} successfully deleted.", outbox.id) }
             .doOnError { e -> logger.warn("Failed to delete outbox event {}: {}", outbox.id, e.message) }
             .onErrorMap { e ->
-                OnFailedOutboxDeletionException("Error when deleting the outbox record with id ${outbox.id}: ${e.message}")
+                OnFailedOutboxDeletionException(outbox.id.toHexString())
             }
     }
 }
