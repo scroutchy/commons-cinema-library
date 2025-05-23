@@ -7,7 +7,7 @@ plugins {
     id("jacoco")
 }
 
-group = "org.scr.project.commons.cinema"
+group = "com.scr.project.commons.cinema"
 
 fun getGitTag(): String {
     return try {
