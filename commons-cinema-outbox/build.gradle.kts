@@ -1,7 +1,7 @@
 plugins {
-    kotlin("jvm") version "2.1.20"
-    id("org.springframework.boot") version "3.4.6"
-    id("io.spring.dependency-management") version "1.1.7"
+    kotlin("jvm")
+    id("org.springframework.boot")
+    id("io.spring.dependency-management")
     id("java-library")
     id("maven-publish")
     id("jacoco")
@@ -20,8 +20,8 @@ fun getGitTag(): String {
     }
 }
 version = getGitTag()
-private val reactorKafkaVersion = "1.3.23"
-private val mockkVersion = "1.14.2"
+private val reactorKafkaVersion: String by project
+private val mockkVersion: String by project
 
 repositories {
     mavenCentral()

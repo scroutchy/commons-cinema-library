@@ -1,7 +1,7 @@
 plugins {
-    kotlin("jvm") version "2.1.20"
-    id("org.springframework.boot") version "3.4.6"
-    id("io.spring.dependency-management") version "1.1.7"
+    kotlin("jvm")
+    id("org.springframework.boot")
+    id("io.spring.dependency-management")
     id("java-library")
     id("maven-publish")
 }
@@ -22,11 +22,10 @@ version = getGitTag()
 repositories {
     mavenCentral()
 }
-
-private val kMongoVersion = "4.10.0"
-private val netMinidevVersion = "2.5.2"
-private val nettyHandlerVersion = "4.1.118.Final"
-private val commonsCompressVersion = "1.26.0"
+private val kMongoVersion: String by project
+private val netMinidevVersion: String by project
+private val nettyHandlerVersion: String by project
+private val commonsCompressVersion: String by project
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
