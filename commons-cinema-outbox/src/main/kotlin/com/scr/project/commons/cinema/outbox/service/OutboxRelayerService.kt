@@ -30,7 +30,7 @@ class OutboxRelayerService(
 
     fun processOutbox(): Flux<Outbox> {
         return simpleOutboxRepository.findAllByStatus(PENDING)
-            .flatMapSequential {
+            .flatMap {
                 logger.debug("Processing outbox event: {}", it.id)
                 outboxRepository.updateStatus(it.id, PROCESSING)
                     .flatMap { processSingleOutboxEvent(it) }
