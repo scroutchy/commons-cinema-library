@@ -115,11 +115,11 @@ class OutboxRelayerServiceTest {
         outboxRelayerService.processOutbox()
             .test()
             .expectSubscription()
-            .expectNextCount(1)
+            .expectNextCount(0)
             .verifyComplete()
         verify(exactly = 1) { simpleOutboxRepository.findAllByStatus(PENDING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox.id, PROCESSING) }
-        verify(exactly = 1) { outboxRepository.updateStatus(outbox.id, PENDING) }
+        verify(inverse = true) { outboxRepository.updateStatus(outbox.id, PENDING) }
         verify(exactly = 1) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
         verify(exactly = 1) { simpleOutboxRepository.delete(outbox.copy(status = PROCESSING)) }
         confirmVerified(simpleOutboxRepository, outboxRepository, kafkaSender)

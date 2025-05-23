@@ -1,6 +1,7 @@
 package com.scr.project.commons.cinema.outbox.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedOutboxDeletionException
 import com.scr.project.commons.cinema.outbox.model.entity.Outbox
 import com.scr.project.commons.cinema.outbox.model.entity.OutboxStatus.PENDING
 import com.scr.project.commons.cinema.outbox.model.entity.OutboxStatus.PROCESSING
@@ -34,8 +35,13 @@ class OutboxRelayerService(
                 outboxRepository.updateStatus(it.id, PROCESSING)
                     .flatMap { processSingleOutboxEvent(it) }
                     .onErrorResume { e ->
-                        logger.warn("Error processing outbox event ${it.id}: ${e.message}")
-                        outboxRepository.updateStatus(it.id, PENDING)
+                        if (e is OnFailedOutboxDeletionException) {
+                            logger.warn("Attention required for outbox record with id ${it.id}. It was sent but not deleted.")
+                            Mono.empty()
+                        } else {
+                            logger.warn("Error processing outbox event ${it.id}: ${e.message}")
+                            outboxRepository.updateStatus(it.id, PENDING)
+                        }
                     }
             }
     }
@@ -51,10 +57,7 @@ class OutboxRelayerService(
                     )
                 }
                 .doOnError { e -> logger.warn("Failed to send outbox event {} to Kafka: {}", outbox.id, e.message, e) }
-                .flatMap { simpleOutboxRepository.delete(outbox) }
-                .doOnSubscribe { logger.debug("Deleting outbox event {} after successful sending.", outbox.id) }
-                .doOnSuccess { logger.debug("Outbox event {} successfully deleted.", outbox.id) }
-                .doOnError { logger.warn("Failed to delete outbox event {}: {}", outbox.id, it.message) }
+                .flatMap { deleteOutboxRecord(outbox) }
         }
     }
 
@@ -62,5 +65,15 @@ class OutboxRelayerService(
         return ProducerRecord(outbox.topic, outbox.aggregateId, objectMapper.readValue(outbox.payload, Class.forName(outbox.aggregateType)))
             .toMono()
             .map { SenderRecord.create(it, outbox.id) }
+    }
+
+    private fun deleteOutboxRecord(outbox: Outbox): Mono<Void> {
+        return simpleOutboxRepository.delete(outbox)
+            .doOnSubscribe { logger.debug("Deleting outbox event {} after successful sending.", outbox.id) }
+            .doOnSuccess { logger.debug("Outbox event {} successfully deleted.", outbox.id) }
+            .doOnError { e -> logger.warn("Failed to delete outbox event {}: {}", outbox.id, e.message) }
+            .onErrorMap { e ->
+                OnFailedOutboxDeletionException("Error when deleting the outbox record with id ${outbox.id}: ${e.message}")
+            }
     }
 }
