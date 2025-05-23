@@ -3,6 +3,7 @@ package com.scr.project.commons.cinema.outbox.config
 import com.scr.project.commons.cinema.outbox.model.entity.Outbox
 import com.scr.project.commons.cinema.outbox.service.OutboxRelayerService
 import jakarta.annotation.PostConstruct
+import jakarta.annotation.PreDestroy
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -34,6 +35,7 @@ class OutboxPollingManager(
     /**
      * Arrête le polling en cours.
      */
+    @PreDestroy
     fun stopPolling() {
         pollingDisposable?.dispose()
         logger.info("Outbox polling stopped.")
