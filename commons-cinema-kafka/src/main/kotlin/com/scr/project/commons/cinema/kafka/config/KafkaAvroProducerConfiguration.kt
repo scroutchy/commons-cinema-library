@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-open class KafkaAvroProducerConfiguration(
+class KafkaAvroProducerConfiguration(
     @Value("\${spring.kafka.bootstrap-servers}") private val bootstrapServers: String,
     @Value("\${spring.kafka.schema.registry.url}") private val schemaRegistryUrl: String,
     @Value("\${spring.kafka.security-protocol}") private val securityProtocol: String,
@@ -19,7 +19,7 @@ open class KafkaAvroProducerConfiguration(
 ) {
 
     @Bean
-    open fun kafkaAvroProducerProperties(): Map<String, Any> {
+    fun kafkaAvroProducerProperties(): Map<String, Any> {
         return KafkaAvroCommonConfiguration.kafkaAvroCommonProperties(
             bootstrapServers,
             schemaRegistryUrl,

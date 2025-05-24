@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 @ConditionalOnProperty(prefix = "spring.kafka.consumer", name = ["group-id"], matchIfMissing = false)
-open class KafkaAvroConsumerConfiguration(
+class KafkaAvroConsumerConfiguration(
     @Value("\${spring.kafka.bootstrap-servers}") private val bootstrapServers: String,
     @Value("\${spring.kafka.schema.registry.url}") private val schemaRegistryUrl: String,
     @Value("\${spring.kafka.security-protocol}") private val securityProtocol: String,
@@ -24,7 +24,7 @@ open class KafkaAvroConsumerConfiguration(
 ) {
 
     @Bean
-    open fun kafkaAvroConsumerProperties(): Map<String, Any> {
+    fun kafkaAvroConsumerProperties(): Map<String, Any> {
         return KafkaAvroCommonConfiguration.kafkaAvroCommonProperties(
             bootstrapServers,
             schemaRegistryUrl,
