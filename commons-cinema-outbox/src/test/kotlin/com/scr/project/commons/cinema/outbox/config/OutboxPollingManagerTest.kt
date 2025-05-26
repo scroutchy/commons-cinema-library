@@ -1,9 +1,11 @@
 package com.scr.project.commons.cinema.outbox.config
 
 import com.scr.project.commons.cinema.outbox.service.OutboxRelayerService
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import reactor.core.publisher.Flux
 import reactor.test.scheduler.VirtualTimeScheduler
@@ -14,9 +16,14 @@ class OutboxPollingManagerTest {
     private val outboxRelayerService = mockk<OutboxRelayerService>()
     private val pollingManager = OutboxPollingManager(outboxRelayerService)
 
+    @BeforeEach
+    fun setUp() {
+        clearMocks(outboxRelayerService)
+        every { outboxRelayerService.processOutbox() } returns Flux.empty()
+    }
+
     @Test
     fun `startPolling must call processOutbox`() {
-        every { outboxRelayerService.processOutbox() } returns Flux.empty()
         VirtualTimeScheduler.getOrSet()
         pollingManager.startPolling()
         VirtualTimeScheduler.getOrSet().advanceTimeBy(Duration.ofSeconds(1))
@@ -26,7 +33,6 @@ class OutboxPollingManagerTest {
 
     @Test
     fun `startPolling must call processOutbox periodically`() {
-        every { outboxRelayerService.processOutbox() } returns Flux.empty()
         VirtualTimeScheduler.getOrSet()
         pollingManager.startPolling()
         VirtualTimeScheduler.getOrSet().advanceTimeBy(Duration.ofSeconds(3))
@@ -35,8 +41,7 @@ class OutboxPollingManagerTest {
     }
 
     @Test
-    fun `stopPolling doit arrêter le polling sans erreur`() {
-        every { outboxRelayerService.processOutbox() } returns Flux.empty()
+    fun `stopPolling must stop polling without error`() {
         pollingManager.startPolling()
         pollingManager.stopPolling()
     }

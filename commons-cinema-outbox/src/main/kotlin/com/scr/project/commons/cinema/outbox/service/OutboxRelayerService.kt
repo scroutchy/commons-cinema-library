@@ -18,7 +18,10 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.kafka.sender.KafkaSender
 import reactor.kafka.sender.SenderRecord
+import reactor.kotlin.core.publisher.switchIfEmpty
 import reactor.kotlin.core.publisher.toMono
+import reactor.util.retry.Retry
+import java.time.Duration
 
 @Service
 class OutboxRelayerService(
@@ -63,7 +66,10 @@ class OutboxRelayerService(
     }
 
     private fun processSingleOutboxEvent(outbox: Outbox): Mono<Outbox> {
-        return kafkaSender.send(createSenderRecord(outbox).toMono()).single()
+        return kafkaSender.send(createSenderRecord(outbox).toMono())
+            .singleOrEmpty()
+            .switchIfEmpty { Mono.error(RuntimeException("Failed to send outbox event ${outbox.id} to Kafka.")) }
+            .retryWhen(Retry.backoff(3, Duration.ofMillis(500)).doBeforeRetry { logger.warn("Retrying...") })
             .doOnSuccess {
                 logger.info(
                     "Outbox event {} successfully sent to Kafka (Offset: {}, Partition: {}).",

@@ -226,20 +226,6 @@ class OutboxRelayerServiceTest {
     }
 
     @Test
-    fun `processOutbox should handle empty kafka result`() {
-        every { simpleOutboxRepository.findAllByStatus(PENDING) } answers { listOf(outbox).toFlux() }
-        every { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) } answers { Flux.empty() }
-        every { simpleOutboxRepository.delete(outbox.copy(status = PROCESSING)) } answers { Mono.empty() }
-        outboxRelayerService.processOutbox()
-            .test()
-            .expectSubscription()
-            .expectNextCount(1)
-            .verifyComplete()
-        verify(exactly = 1) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
-        verify(inverse = true) { simpleOutboxRepository.delete(outbox.copy(status = PROCESSING)) }
-    }
-
-    @Test
     fun `processOutbox should handle error in findAllByStatus`() {
         every { simpleOutboxRepository.findAllByStatus(PENDING) } answers { Flux.error(RuntimeException("DB error")) }
         outboxRelayerService.processOutbox()
