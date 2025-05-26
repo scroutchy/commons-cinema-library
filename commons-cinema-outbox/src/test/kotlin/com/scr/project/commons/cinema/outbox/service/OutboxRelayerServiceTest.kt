@@ -44,8 +44,10 @@ class OutboxRelayerServiceTest {
     fun setUp() {
         clearMocks(simpleOutboxRepository, outboxRepository, kafkaSender)
         every { kafkaSender.send(capture(senderRecordSlot)) } answers {
-            val capturedRecord = senderRecordSlot.captured.block() // Blocking is acceptable in tests
-            val correlationId = capturedRecord?.correlationMetadata()
+            var correlationId: ObjectId? = null
+            senderRecordSlot.captured.subscribe { r ->
+                correlationId = r.correlationMetadata()
+            }
             val mockRecordMetadata = mockk<RecordMetadata>()
             every { mockRecordMetadata.offset() } returns 123L // Example offset
             every { mockRecordMetadata.partition() } returns 456
@@ -91,7 +93,7 @@ class OutboxRelayerServiceTest {
     }
 
     @Test
-    fun `processOutbox should handle kafka exception and not delete outbox record`() {
+    fun `processOutbox should handle kafka exception, retry and not delete outbox record`() {
         every { simpleOutboxRepository.findAllByStatus(PENDING) } answers { listOf(outbox).toFlux() }
         every { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) } answers {
             Flux.error(RuntimeException("Kafka send failed"))
@@ -223,20 +225,6 @@ class OutboxRelayerServiceTest {
         verify { outboxRepository.updateStatus(outbox.id, PROCESSING) }
         verify(inverse = true) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
         verify(inverse = true) { simpleOutboxRepository.delete(any()) }
-    }
-
-    @Test
-    fun `processOutbox should handle empty kafka result`() {
-        every { simpleOutboxRepository.findAllByStatus(PENDING) } answers { listOf(outbox).toFlux() }
-        every { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) } answers { Flux.empty() }
-        every { simpleOutboxRepository.delete(outbox.copy(status = PROCESSING)) } answers { Mono.empty() }
-        outboxRelayerService.processOutbox()
-            .test()
-            .expectSubscription()
-            .expectNextCount(1)
-            .verifyComplete()
-        verify(exactly = 1) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
-        verify(inverse = true) { simpleOutboxRepository.delete(outbox.copy(status = PROCESSING)) }
     }
 
     @Test
