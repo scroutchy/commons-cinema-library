@@ -129,29 +129,64 @@ class OutboxRelayerServiceTest {
     }
 
     @Test
+    fun `processOutbox should handle the case a status update to PROCESSING fails`() {
+        val outbox1 = Outbox(DummyKafkaDto::class.java.name, "id", "{ \"id\": \"value1\", \"type\": \"MOVIE\" }", "topic")
+        val outbox2 = Outbox(DummyKafkaDto::class.java.name, "id", "{ \"id\": \"value2\", \"type\": \"MOVIE\" }", "topic")
+        val outbox3 = Outbox(DummyKafkaDto::class.java.name, "id", "{ \"id\": \"value3\", \"type\": \"MOVIE\" }", "topic")
+        every { simpleOutboxRepository.findAllByStatus(PENDING) } answers { listOf(outbox1, outbox2, outbox3).toFlux() }
+        every { simpleOutboxRepository.delete(any<Outbox>()) } answers { Mono.empty() }
+        every { outboxRepository.updateStatus(outbox1.id, PROCESSING) } answers { outbox1.copy(status = PROCESSING).toMono() }
+        every {
+            outboxRepository.updateStatus(
+                outbox2.id,
+                PROCESSING
+            )
+        } answers { Mono.error(RuntimeException("update status failure")) }//{ RuntimeException("update status failure").toMono() }
+        every { outboxRepository.updateStatus(outbox2.id, ERROR) } answers { outbox2.copy(status = ERROR).toMono() }
+        every { outboxRepository.updateStatus(outbox3.id, PROCESSING) } answers { outbox3.copy(status = PROCESSING).toMono() }
+        outboxRelayerService.processOutbox()
+            .test()
+            .expectSubscription()
+            .expectNextCount(2)
+            .verifyComplete()
+        verify(exactly = 1) { simpleOutboxRepository.findAllByStatus(PENDING) }
+        verify(exactly = 1) { outboxRepository.updateStatus(outbox1.id, PROCESSING) }
+        verify(exactly = 1) { outboxRepository.updateStatus(outbox2.id, PROCESSING) }
+        verify(exactly = 1) { outboxRepository.updateStatus(outbox3.id, PROCESSING) }
+        verify(exactly = 2) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
+        verify(exactly = 1) { simpleOutboxRepository.delete(outbox1.copy(status = PROCESSING)) }
+        verify(inverse = true) { simpleOutboxRepository.delete(outbox2.copy(status = PROCESSING)) }
+        verify(exactly = 1) { simpleOutboxRepository.delete(outbox3.copy(status = PROCESSING)) }
+    }
+
+    @Test
     fun `processOutbox should succeed when more than one document in outbox and reject unknown types`() {
         val outbox1 = Outbox(DummyKafkaDto::class.java.name, "id", "{ \"id\": \"value1\", \"type\": \"MOVIE\" }", "topic")
         val outbox2 = Outbox("dummy", "id", "{ \"id\": \"value1\", \"surname\": \"surname\", \"name\": \"name\" }", "topic")
-        every { simpleOutboxRepository.findAllByStatus(PENDING) } answers { listOf(outbox, outbox1, outbox2).toFlux() }
+        val outbox3 = Outbox(DummyKafkaDto::class.java.name, "id", "{ \"id\": \"value3\", \"type\": \"MOVIE\" }", "topic")
+        every { simpleOutboxRepository.findAllByStatus(PENDING) } answers { listOf(outbox, outbox1, outbox2, outbox3).toFlux() }
         every { simpleOutboxRepository.delete(any<Outbox>()) } answers { Mono.empty() }
         every { outboxRepository.updateStatus(outbox1.id, PROCESSING) } answers { outbox1.copy(status = PROCESSING).toMono() }
         every { outboxRepository.updateStatus(outbox2.id, PROCESSING) } answers { outbox2.copy(status = PROCESSING).toMono() }
+        every { outboxRepository.updateStatus(outbox3.id, PROCESSING) } answers { outbox3.copy(status = PROCESSING).toMono() }
         every { outboxRepository.updateStatus(outbox2.id, PENDING) } answers { outbox2.copy(status = PENDING).toMono() }
         every { outboxRepository.updateStatus(outbox2.id, ERROR) } answers { outbox2.copy(status = ERROR).toMono() }
         outboxRelayerService.processOutbox()
             .test()
             .expectSubscription()
-            .expectNextCount(3)
+            .expectNextCount(4)
             .verifyComplete()
         verify(exactly = 1) { simpleOutboxRepository.findAllByStatus(PENDING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox.id, PROCESSING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox1.id, PROCESSING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox2.id, PROCESSING) }
+        verify(exactly = 1) { outboxRepository.updateStatus(outbox3.id, PROCESSING) }
         verify(inverse = true) { outboxRepository.updateStatus(outbox2.id, PENDING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox2.id, ERROR) }
-        verify(exactly = 2) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
+        verify(exactly = 3) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
         verify(exactly = 1) { simpleOutboxRepository.delete(outbox.copy(status = PROCESSING)) }
         verify(exactly = 1) { simpleOutboxRepository.delete(outbox1.copy(status = PROCESSING)) }
+        verify(exactly = 1) { simpleOutboxRepository.delete(outbox3.copy(status = PROCESSING)) }
         verify(inverse = true) { simpleOutboxRepository.delete(outbox2.copy(status = PROCESSING)) }
         verify(inverse = true) { simpleOutboxRepository.delete(outbox2.copy(status = PENDING)) }
         confirmVerified(simpleOutboxRepository, outboxRepository, kafkaSender)
@@ -182,7 +217,7 @@ class OutboxRelayerServiceTest {
         outboxRelayerService.processOutbox()
             .test()
             .expectSubscription()
-            .expectNextCount(1)
+            .expectNextCount(0)
             .verifyComplete()
         verify { simpleOutboxRepository.findAllByStatus(PENDING) }
         verify { outboxRepository.updateStatus(outbox.id, PROCESSING) }

@@ -35,6 +35,11 @@ class OutboxRelayerService(
             .flatMap {
                 logger.debug("Processing outbox event: {}", it.id)
                 outboxRepository.updateStatus(it.id, PROCESSING)
+                    .onErrorResume { e ->
+                        logger.warn("Failed to update to PROCESSING status for outbox event ${it.id}: ${e.message}")
+                        it.toMono()
+                    }
+                    .filter { it.status == PROCESSING }
                     .flatMap { processSingleOutboxEvent(it) }
                     .onErrorResume { e ->
                         when (e) {
@@ -75,7 +80,7 @@ class OutboxRelayerService(
     private fun createSenderRecord(outbox: Outbox): Mono<SenderRecord<String, Any, ObjectId>> {
         return outbox.toMono()
             .map { ProducerRecord(it.topic, it.aggregateId, objectMapper.readValue(it.payload, Class.forName(it.aggregateType))) }
-            .onErrorMap { OnFailedProducerRecordCreationException(outbox.id.toHexString()) }
+            .onErrorMap { e -> OnFailedProducerRecordCreationException(outbox.id.toHexString(), e) }
             .map { SenderRecord.create(it, outbox.id) }
     }
 
