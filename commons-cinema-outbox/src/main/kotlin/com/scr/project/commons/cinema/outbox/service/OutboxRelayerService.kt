@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedOutboxDeletionException
 import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedProducerRecordCreationException
 import com.scr.project.commons.cinema.outbox.model.entity.Outbox
+import com.scr.project.commons.cinema.outbox.model.entity.OutboxStatus.ERROR
 import com.scr.project.commons.cinema.outbox.model.entity.OutboxStatus.PENDING
 import com.scr.project.commons.cinema.outbox.model.entity.OutboxStatus.PROCESSING
 import com.scr.project.commons.cinema.outbox.repository.OutboxRepository
@@ -39,12 +40,12 @@ class OutboxRelayerService(
                         when (e) {
                             is OnFailedOutboxDeletionException -> {
                                 logger.warn("Attention required for outbox record with id ${it.id}. It was sent but not deleted.")
-                                Mono.empty()
+                                outboxRepository.updateStatus(it.id, ERROR)
                             }
 
                             is OnFailedProducerRecordCreationException -> {
                                 logger.warn("Failed to create producer record for outbox event ${it.id}: ${e.message}")
-                                Mono.empty()
+                                outboxRepository.updateStatus(it.id, ERROR)
                             }
 
                             else -> {
