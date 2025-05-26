@@ -63,32 +63,32 @@ class OutboxRelayerService(
     }
 
     private fun processSingleOutboxEvent(outbox: Outbox): Mono<Outbox> {
-        return outbox.toMono().delayUntil {
-            createSenderRecord(it)
-                .flatMap { kafkaSender.send(it.toMono()).single() }
-                .doOnSuccess {
-                    logger.info(
-                        "Outbox event {} successfully sent to Kafka (Offset: {}, Partition: {}).",
-                        outbox.id, it?.recordMetadata()?.offset(), it?.recordMetadata()?.partition()
-                    )
-                }
-                .doOnError { e -> logger.warn("Failed to send outbox event {} to Kafka: {}", outbox.id, e.message, e) }
-                .flatMap { deleteOutboxRecord(outbox) }
-        }
+        return kafkaSender.send(createSenderRecord(outbox).toMono()).single()
+            .doOnSuccess {
+                logger.info(
+                    "Outbox event {} successfully sent to Kafka (Offset: {}, Partition: {}).",
+                    outbox.id, it?.recordMetadata()?.offset(), it?.recordMetadata()?.partition()
+                )
+            }
+            .doOnError { e -> logger.warn("Failed to send outbox event {} to Kafka: {}", outbox.id, e.message, e) }
+            .flatMap { deleteOutboxRecord(outbox) }
     }
 
-    private fun createSenderRecord(outbox: Outbox): Mono<SenderRecord<String, Any, ObjectId>> {
-        return outbox.toMono()
-            .map { ProducerRecord(it.topic, it.aggregateId, objectMapper.readValue(it.payload, Class.forName(it.aggregateType))) }
-            .onErrorMap { e -> OnFailedProducerRecordCreationException(outbox.id.toHexString(), e) }
-            .map { SenderRecord.create(it, outbox.id) }
-    }
-
-    private fun deleteOutboxRecord(outbox: Outbox): Mono<Void> {
+    private fun deleteOutboxRecord(outbox: Outbox): Mono<Outbox> {
         return simpleOutboxRepository.delete(outbox)
             .doOnSubscribe { logger.debug("Deleting outbox event {} after successful sending.", outbox.id) }
             .doOnSuccess { logger.debug("Outbox event {} successfully deleted.", outbox.id) }
             .doOnError { e -> logger.warn("Failed to delete outbox event {}: {}", outbox.id, e.message) }
             .onErrorMap { OnFailedOutboxDeletionException(outbox.id.toHexString()) }
+            .thenReturn(outbox)
+    }
+
+    private fun createSenderRecord(outbox: Outbox): SenderRecord<String, Any, ObjectId> {
+        val payload = try {
+            objectMapper.readValue(outbox.payload, Class.forName(outbox.aggregateType))
+        } catch (e: Exception) {
+            throw OnFailedProducerRecordCreationException(outbox.id.toHexString(), e)
+        }
+        return SenderRecord.create(ProducerRecord(outbox.topic, outbox.aggregateId, payload), outbox.id)
     }
 }
