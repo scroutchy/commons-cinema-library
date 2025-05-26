@@ -1,6 +1,7 @@
 package com.scr.project.commons.cinema.outbox.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedKafkaSenderException
 import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedOutboxDeletionException
 import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedProducerRecordCreationException
 import com.scr.project.commons.cinema.outbox.model.entity.Outbox
@@ -68,8 +69,10 @@ class OutboxRelayerService(
     private fun processSingleOutboxEvent(outbox: Outbox): Mono<Outbox> {
         return kafkaSender.send(createSenderRecord(outbox).toMono())
             .singleOrEmpty()
-            .switchIfEmpty { Mono.error(RuntimeException("Failed to send outbox event ${outbox.id} to Kafka.")) }
-            .retryWhen(Retry.backoff(3, Duration.ofMillis(500)).doBeforeRetry { logger.warn("Retrying...") })
+            .switchIfEmpty { Mono.error(OnFailedKafkaSenderException(outbox.id.toHexString())) }
+            .retryWhen(
+                Retry.backoff(3, Duration.ofMillis(500))
+                    .doBeforeRetry { logger.warn("Retrying to send outbox event ${outbox.id} to Kafka...") })
             .doOnSuccess {
                 logger.info(
                     "Outbox event {} successfully sent to Kafka (Offset: {}, Partition: {}).",

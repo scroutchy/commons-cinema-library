@@ -44,8 +44,10 @@ class OutboxRelayerServiceTest {
     fun setUp() {
         clearMocks(simpleOutboxRepository, outboxRepository, kafkaSender)
         every { kafkaSender.send(capture(senderRecordSlot)) } answers {
-            val capturedRecord = senderRecordSlot.captured.block() // Blocking is acceptable in tests
-            val correlationId = capturedRecord?.correlationMetadata()
+            var correlationId: ObjectId? = null
+            senderRecordSlot.captured.subscribe { r ->
+                correlationId = r.correlationMetadata()
+            }
             val mockRecordMetadata = mockk<RecordMetadata>()
             every { mockRecordMetadata.offset() } returns 123L // Example offset
             every { mockRecordMetadata.partition() } returns 456
@@ -91,7 +93,7 @@ class OutboxRelayerServiceTest {
     }
 
     @Test
-    fun `processOutbox should handle kafka exception and not delete outbox record`() {
+    fun `processOutbox should handle kafka exception, retry and not delete outbox record`() {
         every { simpleOutboxRepository.findAllByStatus(PENDING) } answers { listOf(outbox).toFlux() }
         every { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) } answers {
             Flux.error(RuntimeException("Kafka send failed"))

@@ -1,5 +1,6 @@
 package com.scr.project.commons.cinema.outbox.error
 
+import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedKafkaSenderException
 import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedOutboxDeletionException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -18,5 +19,12 @@ class OutboxExceptionTest {
         val outboxId = "outboxId"
         val exception = OutboxException.OnFailedProducerRecordCreationException(outboxId)
         assertThat(exception.message).isEqualTo("Failed to create producer record for outbox with id $outboxId")
+    }
+
+    @Test
+    fun `OnFailedKafkaSenderException should return expected error message`() {
+        val outboxId = "outboxId"
+        val exception = OnFailedKafkaSenderException(outboxId)
+        assertThat(exception.message).isEqualTo("Failed to send message through Kafka for outbox event with id $outboxId.")
     }
 }

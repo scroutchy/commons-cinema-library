@@ -14,4 +14,12 @@ sealed class OutboxException : RuntimeException() {
 
         override val message = "Failed to create producer record for outbox with id $outboxId"
     }
+
+    class OnFailedKafkaSenderException(
+        outboxId: String,
+        override val cause: Throwable? = null
+    ) : OutboxException() {
+
+        override val message = "Failed to send message through Kafka for outbox event with id $outboxId."
+    }
 }

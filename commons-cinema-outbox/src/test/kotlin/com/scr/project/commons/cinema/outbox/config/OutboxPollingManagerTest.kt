@@ -5,6 +5,7 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import reactor.core.publisher.Flux
@@ -20,6 +21,11 @@ class OutboxPollingManagerTest {
     fun setUp() {
         clearMocks(outboxRelayerService)
         every { outboxRelayerService.processOutbox() } returns Flux.empty()
+    }
+
+    @AfterEach
+    fun tearDown() {
+        VirtualTimeScheduler.reset()
     }
 
     @Test
