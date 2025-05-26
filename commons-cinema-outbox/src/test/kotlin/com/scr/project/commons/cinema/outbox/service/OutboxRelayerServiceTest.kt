@@ -137,13 +137,13 @@ class OutboxRelayerServiceTest {
         outboxRelayerService.processOutbox()
             .test()
             .expectSubscription()
-            .expectNextCount(3)
+            .expectNextCount(2)
             .verifyComplete()
         verify(exactly = 1) { simpleOutboxRepository.findAllByStatus(PENDING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox.id, PROCESSING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox1.id, PROCESSING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox2.id, PROCESSING) }
-        verify(exactly = 1) { outboxRepository.updateStatus(outbox2.id, PENDING) }
+        verify(inverse = true) { outboxRepository.updateStatus(outbox2.id, PENDING) }
         verify(exactly = 2) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
         verify(exactly = 1) { simpleOutboxRepository.delete(outbox.copy(status = PROCESSING)) }
         verify(exactly = 1) { simpleOutboxRepository.delete(outbox1.copy(status = PROCESSING)) }
@@ -160,10 +160,11 @@ class OutboxRelayerServiceTest {
         outboxRelayerService.processOutbox()
             .test()
             .expectSubscription()
-            .expectNextCount(1)
+            .expectNextCount(0)
             .verifyComplete()
         verify { simpleOutboxRepository.findAllByStatus(PENDING) }
-        verify { outboxRepository.updateStatus(invalidOutbox.id, PROCESSING) }
+        verify(exactly = 1) { outboxRepository.updateStatus(invalidOutbox.id, PROCESSING) }
+        verify(inverse = true) { outboxRepository.updateStatus(invalidOutbox.id, PENDING) }
         verify(inverse = true) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
         verify(inverse = true) { simpleOutboxRepository.delete(any()) }
     }
@@ -218,10 +219,11 @@ class OutboxRelayerServiceTest {
         outboxRelayerService.processOutbox()
             .test()
             .expectSubscription()
-            .expectNextCount(1)
+            .expectNextCount(0)
             .verifyComplete()
         verify { simpleOutboxRepository.findAllByStatus(PENDING) }
-        verify { outboxRepository.updateStatus(outboxWithUnknownType.id, PROCESSING) }
+        verify(exactly = 1) { outboxRepository.updateStatus(outboxWithUnknownType.id, PROCESSING) }
+        verify(inverse = true) { outboxRepository.updateStatus(outboxWithUnknownType.id, PENDING) }
         verify(inverse = true) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
         verify(inverse = true) { simpleOutboxRepository.delete(any()) }
     }

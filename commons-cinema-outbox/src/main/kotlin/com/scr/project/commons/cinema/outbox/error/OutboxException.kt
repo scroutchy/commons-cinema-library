@@ -6,4 +6,12 @@ sealed class OutboxException : RuntimeException() {
 
         override val message = "Failed to delete outbox with id $outboxId"
     }
+
+    class OnFailedProducerRecordCreationException(
+        outboxId: String,
+        override val cause: Throwable? = null
+    ) : OutboxException() {
+
+        override val message = "Failed to create producer record for outbox with id $outboxId"
+    }
 }

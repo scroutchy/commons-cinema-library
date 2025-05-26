@@ -2,6 +2,7 @@ package com.scr.project.commons.cinema.outbox.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedOutboxDeletionException
+import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedProducerRecordCreationException
 import com.scr.project.commons.cinema.outbox.model.entity.Outbox
 import com.scr.project.commons.cinema.outbox.model.entity.OutboxStatus.PENDING
 import com.scr.project.commons.cinema.outbox.model.entity.OutboxStatus.PROCESSING
@@ -35,12 +36,21 @@ class OutboxRelayerService(
                 outboxRepository.updateStatus(it.id, PROCESSING)
                     .flatMap { processSingleOutboxEvent(it) }
                     .onErrorResume { e ->
-                        if (e is OnFailedOutboxDeletionException) {
-                            logger.warn("Attention required for outbox record with id ${it.id}. It was sent but not deleted.")
-                            Mono.empty()
-                        } else {
-                            logger.warn("Error processing outbox event ${it.id}: ${e.message}")
-                            outboxRepository.updateStatus(it.id, PENDING)
+                        when (e) {
+                            is OnFailedOutboxDeletionException -> {
+                                logger.warn("Attention required for outbox record with id ${it.id}. It was sent but not deleted.")
+                                Mono.empty()
+                            }
+
+                            is OnFailedProducerRecordCreationException -> {
+                                logger.warn("Failed to create producer record for outbox event ${it.id}: ${e.message}")
+                                Mono.empty()
+                            }
+
+                            else -> {
+                                logger.warn("Error processing outbox event ${it.id}: ${e.message}")
+                                outboxRepository.updateStatus(it.id, PENDING)
+                            }
                         }
                     }
             }
@@ -62,8 +72,9 @@ class OutboxRelayerService(
     }
 
     private fun createSenderRecord(outbox: Outbox): Mono<SenderRecord<String, Any, ObjectId>> {
-        return ProducerRecord(outbox.topic, outbox.aggregateId, objectMapper.readValue(outbox.payload, Class.forName(outbox.aggregateType)))
-            .toMono()
+        return outbox.toMono()
+            .map { ProducerRecord(it.topic, it.aggregateId, objectMapper.readValue(it.payload, Class.forName(it.aggregateType))) }
+            .onErrorMap { OnFailedProducerRecordCreationException(outbox.id.toHexString()) }
             .map { SenderRecord.create(it, outbox.id) }
     }
 
@@ -72,8 +83,6 @@ class OutboxRelayerService(
             .doOnSubscribe { logger.debug("Deleting outbox event {} after successful sending.", outbox.id) }
             .doOnSuccess { logger.debug("Outbox event {} successfully deleted.", outbox.id) }
             .doOnError { e -> logger.warn("Failed to delete outbox event {}: {}", outbox.id, e.message) }
-            .onErrorMap { e ->
-                OnFailedOutboxDeletionException(outbox.id.toHexString())
-            }
+            .onErrorMap { OnFailedOutboxDeletionException(outbox.id.toHexString()) }
     }
 }
