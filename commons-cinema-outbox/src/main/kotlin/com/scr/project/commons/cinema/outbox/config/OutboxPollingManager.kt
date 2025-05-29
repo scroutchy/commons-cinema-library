@@ -1,17 +1,20 @@
 package com.scr.project.commons.cinema.outbox.config
 
+import com.scr.project.commons.cinema.outbox.config.Properties.SPRING_KAFKA_ENABLED
 import com.scr.project.commons.cinema.outbox.model.entity.Outbox
 import com.scr.project.commons.cinema.outbox.service.OutboxRelayerService
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import java.time.Duration
 
 @Component
+@ConditionalOnProperty(name = [SPRING_KAFKA_ENABLED], havingValue = "true", matchIfMissing = false)
 class OutboxPollingManager(
     private val outboxRelayerService: OutboxRelayerService
 ) {
