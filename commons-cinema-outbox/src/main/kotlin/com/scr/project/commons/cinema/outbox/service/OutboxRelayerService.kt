@@ -1,6 +1,7 @@
 package com.scr.project.commons.cinema.outbox.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.scr.project.commons.cinema.outbox.config.Properties.KAFKA_ENABLING_PROPERTY
 import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedKafkaSenderException
 import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedOutboxDeletionException
 import com.scr.project.commons.cinema.outbox.error.OutboxException.OnFailedProducerRecordCreationException
@@ -14,6 +15,7 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import org.bson.types.ObjectId
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -25,6 +27,7 @@ import reactor.util.retry.Retry
 import java.time.Duration
 
 @Service
+@ConditionalOnProperty(name = [KAFKA_ENABLING_PROPERTY], havingValue = "true", matchIfMissing = false)
 class OutboxRelayerService(
     private val simpleOutboxRepository: SimpleOutboxRepository,
     private val outboxRepository: OutboxRepository,
