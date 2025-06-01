@@ -14,6 +14,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import org.apache.avro.specific.SpecificRecord
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.BeforeEach
@@ -32,13 +33,13 @@ class OutboxRelayerServiceTest {
 
     private val simpleOutboxRepository = mockk<SimpleOutboxRepository>()
     private val outboxRepository = mockk<OutboxRepository>()
-    private val kafkaSender = mockk<KafkaSender<String, Any>>()
+    private val kafkaSender = mockk<KafkaSender<String, SpecificRecord>>()
     private val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
     private val outboxRelayerService = OutboxRelayerService(simpleOutboxRepository, outboxRepository, kafkaSender, objectMapper)
     private val outbox = Outbox(DummyKafkaDto::class.java.name, "id", "{ \"id\": \"value\", \"type\": \"ACTOR\" }", "topic")
-    private val senderRecordSlot = slot<Mono<SenderRecord<String, Any, ObjectId>>>()
+    private val senderRecordSlot = slot<Mono<SenderRecord<String, SpecificRecord, ObjectId>>>()
 
-    data class DummyKafkaDto(val id: String, val type: String)
+    data class DummyKafkaDto(val id: String, val type: String) : SpecificRecord by mockk()
 
     @BeforeEach
     fun setUp() {
@@ -87,7 +88,7 @@ class OutboxRelayerServiceTest {
             .verifyComplete()
         verify(exactly = 1) { simpleOutboxRepository.findAllByStatus(PENDING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox.id, PROCESSING) }
-        verify(exactly = 1) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
+        verify(exactly = 1) { kafkaSender.send(any<Mono<SenderRecord<String, SpecificRecord, ObjectId>>>()) }
         verify(exactly = 1) { simpleOutboxRepository.delete(outbox.copy(status = PROCESSING)) }
         confirmVerified(simpleOutboxRepository, outboxRepository, kafkaSender)
     }
@@ -95,7 +96,7 @@ class OutboxRelayerServiceTest {
     @Test
     fun `processOutbox should handle kafka exception, retry and not delete outbox record`() {
         every { simpleOutboxRepository.findAllByStatus(PENDING) } answers { listOf(outbox).toFlux() }
-        every { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) } answers {
+        every { kafkaSender.send(any<Mono<SenderRecord<String, SpecificRecord, ObjectId>>>()) } answers {
             Flux.error(RuntimeException("Kafka send failed"))
         }
         outboxRelayerService.processOutbox()
@@ -104,7 +105,7 @@ class OutboxRelayerServiceTest {
             .expectNextCount(1)
             .verifyComplete()
         verify(exactly = 1) { simpleOutboxRepository.findAllByStatus(PENDING) }
-        verify(exactly = 1) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
+        verify(exactly = 1) { kafkaSender.send(any<Mono<SenderRecord<String, SpecificRecord, ObjectId>>>()) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox.id, PROCESSING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox.id, PENDING) }
         verify(inverse = true) { simpleOutboxRepository.delete(outbox) }
@@ -125,7 +126,7 @@ class OutboxRelayerServiceTest {
         verify(exactly = 1) { outboxRepository.updateStatus(outbox.id, PROCESSING) }
         verify(inverse = true) { outboxRepository.updateStatus(outbox.id, PENDING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox.id, ERROR) }
-        verify(exactly = 1) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
+        verify(exactly = 1) { kafkaSender.send(any<Mono<SenderRecord<String, SpecificRecord, ObjectId>>>()) }
         verify(exactly = 1) { simpleOutboxRepository.delete(outbox.copy(status = PROCESSING)) }
         confirmVerified(simpleOutboxRepository, outboxRepository, kafkaSender)
     }
@@ -155,7 +156,7 @@ class OutboxRelayerServiceTest {
         verify(exactly = 1) { outboxRepository.updateStatus(outbox1.id, PROCESSING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox2.id, PROCESSING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox3.id, PROCESSING) }
-        verify(exactly = 2) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
+        verify(exactly = 2) { kafkaSender.send(any<Mono<SenderRecord<String, SpecificRecord, ObjectId>>>()) }
         verify(exactly = 1) { simpleOutboxRepository.delete(outbox1.copy(status = PROCESSING)) }
         verify(inverse = true) { simpleOutboxRepository.delete(outbox2.copy(status = PROCESSING)) }
         verify(exactly = 1) { simpleOutboxRepository.delete(outbox3.copy(status = PROCESSING)) }
@@ -185,7 +186,7 @@ class OutboxRelayerServiceTest {
         verify(exactly = 1) { outboxRepository.updateStatus(outbox3.id, PROCESSING) }
         verify(inverse = true) { outboxRepository.updateStatus(outbox2.id, PENDING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outbox2.id, ERROR) }
-        verify(exactly = 3) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
+        verify(exactly = 3) { kafkaSender.send(any<Mono<SenderRecord<String, SpecificRecord, ObjectId>>>()) }
         verify(exactly = 1) { simpleOutboxRepository.delete(outbox.copy(status = PROCESSING)) }
         verify(exactly = 1) { simpleOutboxRepository.delete(outbox1.copy(status = PROCESSING)) }
         verify(exactly = 1) { simpleOutboxRepository.delete(outbox3.copy(status = PROCESSING)) }
@@ -208,7 +209,7 @@ class OutboxRelayerServiceTest {
         verify(exactly = 1) { outboxRepository.updateStatus(invalidOutbox.id, PROCESSING) }
         verify(inverse = true) { outboxRepository.updateStatus(invalidOutbox.id, PENDING) }
         verify(exactly = 1) { outboxRepository.updateStatus(invalidOutbox.id, ERROR) }
-        verify(inverse = true) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
+        verify(inverse = true) { kafkaSender.send(any<Mono<SenderRecord<String, SpecificRecord, ObjectId>>>()) }
         verify(inverse = true) { simpleOutboxRepository.delete(any()) }
     }
 
@@ -223,7 +224,7 @@ class OutboxRelayerServiceTest {
             .verifyComplete()
         verify { simpleOutboxRepository.findAllByStatus(PENDING) }
         verify { outboxRepository.updateStatus(outbox.id, PROCESSING) }
-        verify(inverse = true) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
+        verify(inverse = true) { kafkaSender.send(any<Mono<SenderRecord<String, SpecificRecord, ObjectId>>>()) }
         verify(inverse = true) { simpleOutboxRepository.delete(any()) }
     }
 
@@ -257,7 +258,7 @@ class OutboxRelayerServiceTest {
         verify(exactly = 1) { outboxRepository.updateStatus(outboxWithUnknownType.id, PROCESSING) }
         verify(inverse = true) { outboxRepository.updateStatus(outboxWithUnknownType.id, PENDING) }
         verify(exactly = 1) { outboxRepository.updateStatus(outboxWithUnknownType.id, ERROR) }
-        verify(inverse = true) { kafkaSender.send(any<Mono<SenderRecord<String, Any, ObjectId>>>()) }
+        verify(inverse = true) { kafkaSender.send(any<Mono<SenderRecord<String, SpecificRecord, ObjectId>>>()) }
         verify(inverse = true) { simpleOutboxRepository.delete(any()) }
     }
 }

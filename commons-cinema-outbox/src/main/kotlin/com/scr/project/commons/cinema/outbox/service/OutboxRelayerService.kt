@@ -11,6 +11,7 @@ import com.scr.project.commons.cinema.outbox.model.entity.OutboxStatus.PENDING
 import com.scr.project.commons.cinema.outbox.model.entity.OutboxStatus.PROCESSING
 import com.scr.project.commons.cinema.outbox.repository.OutboxRepository
 import com.scr.project.commons.cinema.outbox.repository.SimpleOutboxRepository
+import org.apache.avro.specific.SpecificRecord
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.bson.types.ObjectId
 import org.slf4j.Logger
@@ -31,7 +32,7 @@ import java.time.Duration
 class OutboxRelayerService(
     private val simpleOutboxRepository: SimpleOutboxRepository,
     private val outboxRepository: OutboxRepository,
-    private val kafkaSender: KafkaSender<String, Any>,
+    private val kafkaSender: KafkaSender<String, SpecificRecord>,
     private val objectMapper: ObjectMapper
 ) {
 
@@ -95,9 +96,9 @@ class OutboxRelayerService(
             .thenReturn(outbox)
     }
 
-    private fun createSenderRecord(outbox: Outbox): SenderRecord<String, Any, ObjectId> {
+    private fun createSenderRecord(outbox: Outbox): SenderRecord<String, SpecificRecord, ObjectId> {
         val payload = try {
-            objectMapper.readValue(outbox.payload, Class.forName(outbox.aggregateType))
+            objectMapper.readValue(outbox.payload, Class.forName(outbox.aggregateType)) as SpecificRecord
         } catch (e: Exception) {
             throw OnFailedProducerRecordCreationException(outbox.id.toHexString(), e)
         }

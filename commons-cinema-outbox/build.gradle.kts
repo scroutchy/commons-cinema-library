@@ -23,6 +23,8 @@ fun getGitTag(): String {
 version = getGitTag()
 private val reactorKafkaVersion: String by project
 private val mockkVersion: String by project
+private val avroVersion: String by project
+private val jacksonModuleKotlinVersion: String by project
 
 repositories {
     mavenCentral()
@@ -33,11 +35,12 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
     implementation("io.projectreactor.kafka:reactor-kafka:$reactorKafkaVersion")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
-    testImplementation("io.mockk:mockk:${mockkVersion}")
+    implementation("org.apache.avro:avro:$avroVersion")
+    testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")
+    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonModuleKotlinVersion")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
