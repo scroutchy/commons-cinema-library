@@ -21,7 +21,6 @@ fun getGitTag(): String {
 }
 version = getGitTag()
 private val netMinidevVersion: String by project
-private val nettyHandlerVersion: String by project
 private val commonsCompressVersion: String by project
 
 repositories {
@@ -32,9 +31,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("net.minidev:json-smart:$netMinidevVersion")
-    implementation("io.netty:netty-handler:$nettyHandlerVersion")
-    implementation("io.netty:netty-common:$nettyHandlerVersion")
     implementation("org.apache.commons:commons-compress:$commonsCompressVersion")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     testImplementation("io.projectreactor:reactor-test")

@@ -7,7 +7,7 @@ plugins {
     id("org.sonarqube") version "6.0.1.5171"
 }
 
-group = "org.scr.project"
+group = "com.scr.project"
 version = "1.0-SNAPSHOT"
 
 

@@ -24,15 +24,12 @@ repositories {
 }
 private val kMongoVersion: String by project
 private val netMinidevVersion: String by project
-private val nettyHandlerVersion: String by project
 private val commonsCompressVersion: String by project
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.litote.kmongo:kmongo:$kMongoVersion")
     implementation("net.minidev:json-smart:$netMinidevVersion")
-    implementation("io.netty:netty-handler:$nettyHandlerVersion")
-    implementation("io.netty:netty-common:$nettyHandlerVersion")
     implementation("org.apache.commons:commons-compress:$commonsCompressVersion")
     implementation("org.awaitility:awaitility")
     testImplementation("org.springframework.boot:spring-boot-starter-data-mongodb")
